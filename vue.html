@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./style.css">
+    <title>ToDo App (Vue)</title>
+</head>
+
+<body>
+    <div id="app">
+        <todo-app input-placeholder="Enter your task..." add-button-text="Add Task"></todo-app>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script>
+        Vue.component('todo-app', {
+            props: ['inputPlaceholder', 'addButtonText'],
+            data() {
+                return {
+                    taskText: '',
+                    tasks: []
+                };
+            },
+            methods: {
+                addTask() {
+                    if (this.taskText.trim() !== '') {
+                        this.tasks.unshift(this.taskText);
+                        this.taskText = '';
+                    }
+                },
+                removeTask(index) {
+                    this.tasks.splice(index, 1);
+                }
+            },
+            template: `
+                <div class="todo-app-container container">
+                    <h1 class="text-center">ToDo App</h1>
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            class="form-control mb-2"
+                            :placeholder="inputPlaceholder || 'Add a new task'"
+                            v-model="taskText"
+                            @keyup.enter="addTask"
+                        />
+                        <button class="btn btn-primary mb-3" @click="addTask">
+                            {{ addButtonText || 'Add Task' }}
+                        </button>
+                    </div>
+                    <div id="todo-list">
+                        <div v-for="(task, index) in tasks" :key="index" class="todo-item">
+                        <input type="checkbox" class="form-check-input me-2" />
+                        <span>{{ task }}</span>
+                        <button class="btn btn-danger btn-sm ms-2" @click="removeTask(index)">
+                            Delete
+                        </button>
+                        </div>
+                    </div>
+                </div>
+            `
+        });
+
+        new Vue({
+            el: '#app'
+        });
+    </script>
+</body>
+
+</html>

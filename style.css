@@ -1,0 +1,23 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding-top: 50px;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.todo-item input[type="checkbox"] {
+    margin-right: 10px;
+}

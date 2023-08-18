@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./style.css">
+    <title>ToDo App (jQuery)</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <h1 class="text-center">ToDo App</h1>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function addTask(taskText) {
+                const todoItem = $("<div>").addClass("todo-item");
+                const checkbox = $("<input>").attr("type", "checkbox").addClass("form-check-input me-2");
+                const span = $("<span>").text(taskText);
+                const deleteBtn = $("<button>").addClass("btn btn-danger btn-sm ms-2").text("Delete");
+
+                todoItem.append(checkbox, span, deleteBtn);
+                $("#todo-list").prepend(todoItem);
+            }
+
+            $("#container").append(`
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Add a new task" id="task-input">
+                    <button class="btn btn-primary" id="add-btn">Add</button>
+                </div>
+                <div id="todo-list"></div>
+            `);
+
+            $("#add-btn").on("click", function () {
+                const taskText = $("#task-input").val().trim();
+                if (taskText !== "") {
+                    addTask(taskText);
+                    $("#task-input").val("");
+                }
+            });
+
+            $(document).on("click", ".btn-danger", function () {
+                $(this).closest(".todo-item").remove();
+            });
+
+            $("#task-input").on("keyup", function (event) {
+                if (event.key === "Enter") {
+                    const taskText = $("#task-input").val().trim();
+                    if (taskText !== "") {
+                        addTask(taskText);
+                        $("#task-input").val("");
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

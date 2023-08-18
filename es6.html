@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./style.css">
+    <title>ToDo App (ES6)</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <h1 class="text-center">ToDo App</h1>
+    </div>
+
+    <script>
+        class ToDoApp {
+            constructor(containerId, options = {}) {
+                this.container = document.getElementById(containerId);
+
+                if (!this.container) {
+                    console.error(`Container with ID ${containerId} not found.`);
+                    return;
+                }
+
+                this.inputGroup = document.createElement('div');
+                this.inputGroup.classList.add('input-group', 'mb-3');
+
+                this.taskInput = document.createElement('input');
+                this.taskInput.type = 'text';
+                this.taskInput.classList.add('form-control');
+                this.taskInput.placeholder = options.inputPlaceholder || 'Add a new task';
+                this.inputGroup.appendChild(this.taskInput);
+
+                this.addBtn = document.createElement('button');
+                this.addBtn.classList.add('btn', 'btn-primary');
+                this.addBtn.textContent = options.addButtonText || 'Add';
+                this.inputGroup.appendChild(this.addBtn);
+
+                this.container.appendChild(this.inputGroup);
+
+                this.todoList = document.createElement('div');
+                this.todoList.id = 'todo-list';
+                this.container.appendChild(this.todoList);
+
+                this.addBtn.addEventListener('click', () => this.addTask());
+
+                if (options.enableEnterKey) {
+                    this.taskInput.addEventListener('keyup', (event) => {
+                        if (event.key === 'Enter') {
+                            this.addTask();
+                        }
+                    });
+                }
+
+                this.todoList.addEventListener('click', (event) => {
+                    if (event.target.tagName === 'BUTTON') {
+                        this.removeTask(event.target.closest('.todo-item'));
+                    }
+                });
+            }
+
+            addTask() {
+                const taskText = this.taskInput.value.trim();
+                if (taskText !== '') {
+                    const todoItem = document.createElement('div');
+                    todoItem.classList.add('todo-item');
+                    todoItem.innerHTML = `
+                        <input type="checkbox">
+                        <span>${taskText}</span>
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    `;
+                    this.todoList.appendChild(todoItem);
+                    this.taskInput.value = '';
+
+                    if (typeof this.onTaskAdded === 'function') {
+                        this.onTaskAdded(taskText);
+                    }
+                }
+            }
+
+            removeTask(taskElement) {
+                taskElement.remove();
+            }
+
+            setTaskAddedCallback(callback) {
+                if (typeof callback === 'function') {
+                    this.onTaskAdded = callback;
+                }
+            }
+        }
+    </script>
+
+    <script>
+        const todoApp = new ToDoApp('container', {
+            inputPlaceholder: 'Enter your task...',
+            addButtonText: 'Add Task',
+            enableEnterKey: true,
+        });
+
+        todoApp.setTaskAddedCallback((taskText) => {
+            console.log(`New task added: ${taskText}`);
+        });
+    </script>
+</body>
+
+</html>
