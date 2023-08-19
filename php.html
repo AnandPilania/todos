@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/style.css">
+    <title>ToDo App</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <h1 class="text-center">ToDo App</h1>
+    </div>
+
+    <div class="container mt-4" id="app">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="Add a new task" id="task-input">
+            <button class="btn btn-primary" id="add-btn">Add</button>
+        </div>
+        <div id="todo-list"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const driver = urlParams.get('driver') || 'in-memory';
+            const url = `/php/backend.php?driver=${driver}`;
+
+            loadTasks();
+
+            $('#add-btn').on('click', function () {
+                const taskText = $('#task-input').val().trim();
+                if (taskText !== '') {
+                    addTask(taskText);
+                }
+            });
+
+            $('body').on('change', 'input[type="checkbox"]', function () {
+                const index = $(this).data('index');
+                toggleTask(index);
+            });
+
+            $('body').on('click', '.btn-danger', function () {
+                const index = $(this).data('index');
+                deleteTask(index);
+            });
+
+            function updateUI(tasks) {
+                let todoItems = '';
+                tasks.forEach((task, index) => {
+                    todoItems += `
+                        <div class="todo-item">
+                            <input type="checkbox" class="form-check-input me-2" data-index="${index}" ${task.completed ? 'checked' : ''}>
+                            <span>${task.text}</span>
+                            <button class="btn btn-danger btn-sm ms-2" data-index="${index}">Delete</button>
+                        </div>
+                    `;
+                });
+                $('#todo-list').html(todoItems);
+            }
+
+            function loadTasks() {
+                $.get(url, function (data) {
+                    updateUI(data);
+                });
+            }
+
+            function addTask(taskText) {
+                $.post(url, { action: 'addTask', taskText: taskText }, function (data) {
+                    updateUI(data);
+                });
+            }
+
+            function toggleTask(index) {
+                $.post(url, { action: 'toggleTask', index: index }, function (data) {
+                    updateUI(data);
+                });
+            }
+
+            function deleteTask(index) {
+                $.post(url, { action: 'deleteTask', index: index }, function (data) {
+                    updateUI(data);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
