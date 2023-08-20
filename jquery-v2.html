@@ -33,7 +33,11 @@
 
                     todoItem.attr('data-status', isChecked ? 'completed' : 'active');
                     span.toggleClass('text-decoration-line-through text-dark text-opacity-25', isChecked);
+
+                    $(document).trigger('todo:updated');
                 });
+
+                $(document).trigger('todo:updated');
             }
 
             $('#container').append(`
@@ -46,6 +50,8 @@
                 <div id="todo-list"></div>
             `);
 
+            $(document).trigger('todo:container-added');
+
             $('#add-btn').on('click', function () {
                 const taskText = $('#task-input').val().trim();
 
@@ -57,6 +63,7 @@
 
             $(document).on('click', '.btn-danger', function () {
                 $(this).closest('.todo-item').remove();
+                $(document).trigger('todo:updated');
             });
 
             $('#task-input').on('keyup', function (event) {
@@ -70,6 +77,29 @@
                 }
             });
         });
+
+        $.fn.taskCountSummary = function (appendTo = '#todo-init') {
+            const _t = this,
+                summaryContainer = $('<div class="task-summary blockquote-footer text-end"></div>');
+
+            $(document).on('todo:container-added', function () {
+                _t.find(appendTo).append(summaryContainer);
+            });
+
+            function updateSummary() {
+                const tasks = _t.find('.todo-item'),
+                    totalTasks = tasks.length,
+                    completedTasks = tasks.filter('[data-status="completed"]').length,
+                    remainingTasks = totalTasks - completedTasks,
+                    summaryText = `${remainingTasks} tasks remaining out of ${totalTasks} (${completedTasks} completed)`;
+
+                summaryContainer.text(summaryText);
+            }
+
+            updateSummary();
+
+            $(document).on('todo:updated', updateSummary);
+        };
 
         $.fn.taskFilter = function () {
             const _t = this,
@@ -111,7 +141,7 @@
         $.fn.fuzzySearch = function (useFuzzyMatch = false) {
             const _t = this;
 
-            searchInput = $('<input type="text" class="form-control my-4" placeholder="Search tasks...">');
+            searchInput = $('<input type="text" class="form-control mb-4" placeholder="Search tasks...">');
 
             _t.append(searchInput);
 
@@ -146,6 +176,7 @@
 
         $('#container').taskFilter();
         $('#container').fuzzySearch(true);
+        $('#container').taskCountSummary();
     </script>
 </body>
 
