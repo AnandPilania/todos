@@ -11,7 +11,46 @@
 
 <body>
     <div class="container" id="container">
-        <h1 class="text-center">ToDo App</h1>
+        <h1 class="text-center">
+            ToDo App
+            <a href="javascript: void(0);" id="info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-info-circle ms-2" viewBox="0 0 16 16">
+                    <path
+                        d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm1 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-.75-4.5a.75.75 0 0 1 1.5 0v2.25a.75.75 0 0 1-1.5 0V7.5zm0 3a.75.75 0 0 1 1.5 0v.75a.75.75 0 0 1-1.5 0v-.75z" />
+                </svg>
+            </a>
+        </h1>
+    </div>
+
+    <div class="modal show fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Info</h5>
+                    <button type="button" class="btn-close close-modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This is a ToDo App built using jQuery. You can manage your tasks and perform various actions.</p>
+                    <h6>Added Code Plugins:</h6>
+                    <ul>
+                        <li>Edit Task Plugin: Allows you to edit a task by double-clicking on it.</li>
+                        <li>Task Filter Plugin: Provides filtering options for tasks.</li>
+                        <li>Fuzzy Search Plugin: Enables fuzzy searching for tasks (keyboard shortcut available).</li>
+                        <li>Task Count Summary Plugin: Displays a summary of the task count.</li>
+                        <li>Select on Long Press Plugin: Selects a task on long press.</li>
+                    </ul>
+                    <h6>Storage Plugins:</h6>
+                    <p>You can create storage plugins to save and retrieve tasks using various storage mechanisms.</p>
+                    <p>An example is the LocalStorage Storage Plugin provided for reference. You can create other
+                        storage plugins, such as database storage, by following the same approach.</p>
+                    <p>Note: The sortable feature allows you to reorder tasks using drag-and-drop.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -131,6 +170,14 @@
                         _t.val('');
                     }
                 }
+            });
+
+            $('#info-icon').click(function () {
+                $('#infoModal').addClass('show').show();
+            });
+
+            $('#infoModal .close-modal').click(function () {
+                $('#infoModal').removeClass('show').hide();
             });
         });
 
