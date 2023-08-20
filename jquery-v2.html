@@ -16,27 +16,45 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="./jquery-v2-plugins/editTodo.plugin.js"></script>
+    <script src="./jquery-v2-plugins/fuzzySearch.plugin.js"></script>
+    <script src="./jquery-v2-plugins/selectOnLongPress.plugin.js"></script>
+    <script src="./jquery-v2-plugins/todoCountSummary.plugin.js"></script>
+    <script src="./jquery-v2-plugins/todoFilter.plugin.js"></script>
+    <script src="./jquery-v2-plugins/storageCore.plugin.js"></script>
+    <script src="./jquery-v2-plugins/storageLocalDriver.plugin.js"></script>
     <script>
+        const getTodoId = (todoItem) => {
+            return todoItem.data('todo-id') ?? $('#container .todo-item').index(todoItem) + 1;
+        }
+
+        const addTodo = (todo, listenStorage = true) => {
+            const dragHandle = $("<div>").addClass("drag-handle").text("☰"),
+                checkbox = $('<input>').attr('type', 'checkbox').prop('checked', todo.completed || false).addClass('todo-checkbox form-check-input me-2'),
+                span = $('<span>').addClass(todo.completed ? 'text-decoration-line-through text-dark text-opacity-25' : '').text(todo.text || todo),
+                deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete'),
+                todoItem = $('<div>').addClass('todo-item')
+                    .attr('data-todo-id', todo.id || $('#container .todo-item').length + 1)
+                    .attr('data-status', todo.completed ? 'completed' : 'active');
+
+            todoItem.append(dragHandle, checkbox, span, deleteBtn);
+
+            $("#todo-list").prepend(todoItem);
+
+            $(document).trigger('todo:updated', {
+                type: 'add',
+                id: getTodoId(todoItem),
+                text: todo.text || todo,
+                status: 'active',
+                listenStorage: listenStorage,
+            });
+        }
+
         $(document).ready(function () {
-            function addTask(taskText) {
-                const taskStatus = 'active',
-                    todoItem = $('<div>').addClass('todo-item').attr('data-status', taskStatus),
-                    checkbox = $('<input>').attr('type', 'checkbox').addClass('todo-checkbox form-check-input me-2'),
-                    span = $('<span>').text(taskText),
-                    deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete'),
-                    dragHandle = $("<div>").addClass("drag-handle").text("☰");
-
-                todoItem.append(dragHandle, checkbox, span, deleteBtn);
-
-                $("#todo-list").prepend(todoItem);
-
-                $(document).trigger('todo:updated');
-            }
-
             $('#container').append(`
                 <div id="todo-init">
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Add a new task" id="task-input">
+                        <input type="text" class="form-control" placeholder="Add a new todo" id="todo-input">
                         <button class="btn btn-primary" id="add-btn">Add</button>
                     </div>
                 </div>
@@ -48,193 +66,83 @@
                 containment: "#todo-list",
                 handle: ".drag-handle",
                 stop: function () {
-                    const tasks = $(".todo-item");
-                    const newOrder = [];
-                    tasks.each(function () {
-                        const taskId = $(this).data("task-id");
-                        newOrder.push(taskId);
+                    const todos = $(".todo-item"),
+                        newOrder = [];
+
+                    todos.each(function () {
+                        const todoId = $(this).data("todo-id");
+
+                        newOrder.push(todoId);
                     });
-                    console.log("New task order:", newOrder);
+
+                    $(document).trigger('todo:updated', {
+                        type: 'sort',
+                    });
+
+                    console.log("New todo order:", newOrder);
                 },
             });
 
             $(document).trigger('todo:container-added');
 
             $('#add-btn').on('click', function () {
-                const taskText = $('#task-input').val().trim();
+                const todoText = $('#todo-input').val().trim();
 
-                if (taskText !== '') {
-                    addTask(taskText);
-                    $('#task-input').val('');
+                if (todoText !== '') {
+                    addTodo(todoText);
+                    $('#todo-input').val('');
                 }
             });
 
             $(document).on('click', '.btn-danger', function () {
-                $(this).closest('.todo-item').remove();
-                $(document).trigger('todo:updated');
+                const todoItem = $(this).closest('.todo-item');
+
+                todoItem.remove();
+
+                $(document).trigger('todo:updated', {
+                    type: 'delete',
+                    id: getTodoId(todoItem),
+                });
             });
 
-            $(document).on('change', '.todo-checkbox', function () {
+            $(document).on('change', '.todo-checkbox', function (event) {
                 const _t = $(this),
                     isChecked = _t.prop('checked'),
-                    todoItem = _t.closest('.todo-item');
+                    todoItem = _t.closest('.todo-item'),
+                    status = isChecked ? 'completed' : 'active';
 
-                todoItem.attr('data-status', isChecked ? 'completed' : 'active');
+                todoItem.attr('data-status', status);
                 todoItem.find('span').toggleClass('text-decoration-line-through text-dark text-opacity-25', isChecked);
 
-                $(document).trigger('todo:updated');
+                $(document).trigger('todo:updated', {
+                    type: 'update',
+                    id: getTodoId(todoItem),
+                    completed: isChecked,
+                });
             });
 
-            $('#task-input').on('keyup', function (event) {
+            $('#todo-input').on('keyup', function (event) {
                 if (event.key === 'Enter') {
-                    const taskText = $('#task-input').val().trim();
+                    const _t = $(this),
+                        todoText = _t.val().trim();
 
-                    if (taskText !== '') {
-                        addTask(taskText);
-                        $('#task-input').val('');
+                    if (todoText !== '') {
+                        addTodo(todoText);
+                        _t.val('');
                     }
                 }
             });
         });
 
-        $.fn.editTask = function () {
-            const _t = this;
-
-            _t.on('dblclick', '.todo-item span', function () {
-                const taskItem = $(this).closest('.todo-item'),
-                    taskText = taskItem.find('span').text(),
-                    isCompleted = taskItem.data('status') === 'completed',
-                    editTextbox = $('<input type="text" class="form-control edit-input">').val(taskText);
-
-                taskItem.html('').append(editTextbox);
-
-                editTextbox.on('blur keyup', function (event) {
-                    if (event.type === 'blur' || event.key === 'Enter') {
-                        const editedText = $(this).val().trim();
-
-                        if (editedText !== '') {
-                            taskItem.html(`<input type="checkbox" class="todo-checkbox form-check-input me-2" ${isCompleted ? 'checked' : ''}>
-                                    <span>${editedText}</span>
-                                    <button class="btn btn-danger btn-sm ms-2">Delete</button>`);
-
-                            if (isCompleted) {
-                                taskItem.find('span').addClass('text-decoration-line-through text-dark text-opacity-25');
-                            }
-                        }
-                    }
-                });
-
-                editTextbox.focus();
-            });
-        };
-
-        $.fn.taskCountSummary = function (appendTo = '#todo-init') {
-            const _t = this,
-                summaryContainer = $('<div class="task-summary blockquote-footer text-end"></div>');
-
-            $(document).on('todo:container-added', function () {
-                _t.find(appendTo).append(summaryContainer);
-            });
-
-            function updateSummary() {
-                const tasks = _t.find('.todo-item'),
-                    totalTasks = tasks.length,
-                    completedTasks = tasks.filter('[data-status="completed"]').length,
-                    remainingTasks = totalTasks - completedTasks,
-                    summaryText = `${remainingTasks} tasks remaining out of ${totalTasks} (${completedTasks} completed)`;
-
-                summaryContainer.text(summaryText);
-            }
-
-            updateSummary();
-
-            $(document).on('todo:updated', updateSummary);
-        };
-
-        $.fn.taskFilter = function () {
-            const _t = this,
-                filters = [{
-                    value: 'all',
-                    label: 'All'
-                },
-                {
-                    value: 'active',
-                    label: 'Active'
-                },
-                {
-                    value: 'completed',
-                    label: 'Completed'
-                }],
-                filterContainer = $('<div class="filter-container d-flex justify-content-center"></div>');
-
-            filters.forEach(filter => {
-                const button = $(`<button class="btn border mx-2 my-4" data-filter="${filter.value}">${filter.label}</button>`);
-
-                filterContainer.append(button);
-            });
-
-            _t.append(filterContainer);
-            _t.on('click', '[data-filter]', function () {
-                const filterValue = $(this).data('filter'),
-                    tasks = _t.find('.todo-item');
-
-                tasks.hide();
-
-                if (filterValue === 'all') {
-                    tasks.show();
-                } else {
-                    tasks.filter(`[data-status="${filterValue}"]`).show();
-                }
-            });
-        };
-
-        $.fn.fuzzySearch = function (useFuzzyMatch = false) {
-            const _t = this;
-
-            searchInput = $('<input type="text" class="form-control mb-4" placeholder="Search tasks...">');
-
-            _t.append(searchInput);
-
-            searchInput.on('input', function () {
-                const searchText = $(this).val().trim().toLowerCase(),
-                    tasks = _t.find('.todo-item');
-
-                tasks.each(function () {
-                    const taskText = $(this).find('span').text().toLowerCase();
-
-                    if (useFuzzyMatch ? fuzzyMatch(taskText, searchText) : taskText.includes(searchText)) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            });
-
-            $(document).on('keydown', function (event) {
-                if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
-                    searchInput.focus();
-                    event.preventDefault();
-                }
-            });
-        };
-
-        function fuzzyMatch(text, pattern) {
-            const patternLength = pattern.length;
-            let patternIndex = 0;
-
-            for (let i = 0; i < text.length && patternIndex < patternLength; i++) {
-                if (text[i] === pattern[patternIndex]) {
-                    patternIndex++;
-                }
-            }
-
-            return patternIndex === patternLength;
-        }
-
-        $('#container').editTask();
-        $('#container').taskFilter();
-        $('#container').fuzzySearch(true);
-        $('#container').taskCountSummary();
+        $('#container').editTodo()
+            .todoFilter()
+            .fuzzySearch(true)
+            .todoCountSummary()
+            .selectOnLongPress()
+            .coreStorage(
+                $('#container').localStorageDriver(),
+                addTodo
+            );
     </script>
 </body>
 
