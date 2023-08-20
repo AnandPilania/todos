@@ -108,7 +108,44 @@
             });
         };
 
+        $.fn.fuzzySearch = function (useFuzzyMatch = false) {
+            const _t = this;
+
+            searchInput = $('<input type="text" class="form-control my-4" placeholder="Search tasks...">');
+
+            _t.append(searchInput);
+
+            searchInput.on('input', function () {
+                const searchText = $(this).val().trim().toLowerCase(),
+                    tasks = _t.find('.todo-item');
+
+                tasks.each(function () {
+                    const taskText = $(this).find('span').text().toLowerCase();
+
+                    if (useFuzzyMatch ? fuzzyMatch(taskText, searchText) : taskText.includes(searchText)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+        };
+
+        function fuzzyMatch(text, pattern) {
+            const patternLength = pattern.length;
+            let patternIndex = 0;
+
+            for (let i = 0; i < text.length && patternIndex < patternLength; i++) {
+                if (text[i] === pattern[patternIndex]) {
+                    patternIndex++;
+                }
+            }
+
+            return patternIndex === patternLength;
+        }
+
         $('#container').taskFilter();
+        $('#container').fuzzySearch(true);
     </script>
 </body>
 
