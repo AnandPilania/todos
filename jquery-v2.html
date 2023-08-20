@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/style.css">
+    <title>ToDo App (jQuery-V2)</title>
+</head>
+
+<body>
+    <div class="container" id="container">
+        <h1 class="text-center">ToDo App</h1>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function addTask(taskText) {
+                const taskStatus = 'active',
+                    todoItem = $('<div>').addClass('todo-item').attr('data-status', taskStatus),
+                    checkbox = $('<input>').attr('type', 'checkbox').addClass('form-check-input me-2'),
+                    span = $('<span>').text(taskText),
+                    deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete');
+
+                todoItem.append(checkbox, span, deleteBtn);
+
+                $('#todo-list').prepend(todoItem);
+
+                checkbox.on('change', function () {
+                    const isChecked = $(this).prop('checked');
+
+                    todoItem.attr('data-status', isChecked ? 'completed' : 'active');
+                    span.toggleClass('text-decoration-line-through text-dark text-opacity-25', isChecked);
+                });
+            }
+
+            $('#container').append(`
+                <div id="todo-init">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Add a new task" id="task-input">
+                        <button class="btn btn-primary" id="add-btn">Add</button>
+                    </div>
+                </div>
+                <div id="todo-list"></div>
+            `);
+
+            $('#add-btn').on('click', function () {
+                const taskText = $('#task-input').val().trim();
+
+                if (taskText !== '') {
+                    addTask(taskText);
+                    $('#task-input').val('');
+                }
+            });
+
+            $(document).on('click', '.btn-danger', function () {
+                $(this).closest('.todo-item').remove();
+            });
+
+            $('#task-input').on('keyup', function (event) {
+                if (event.key === 'Enter') {
+                    const taskText = $('#task-input').val().trim();
+
+                    if (taskText !== '') {
+                        addTask(taskText);
+                        $('#task-input').val('');
+                    }
+                }
+            });
+        });
+
+        $.fn.taskFilter = function () {
+            const _t = this,
+                filters = [{
+                    value: 'all',
+                    label: 'All'
+                },
+                {
+                    value: 'active',
+                    label: 'Active'
+                },
+                {
+                    value: 'completed',
+                    label: 'Completed'
+                }],
+                filterContainer = $('<div class="filter-container d-flex justify-content-center"></div>');
+
+            filters.forEach(filter => {
+                const button = $(`<button class="btn border mx-2 my-4" data-filter="${filter.value}">${filter.label}</button>`);
+
+                filterContainer.append(button);
+            });
+
+            _t.append(filterContainer);
+            _t.on('click', '[data-filter]', function () {
+                const filterValue = $(this).data('filter'),
+                    tasks = _t.find('.todo-item');
+
+                tasks.hide();
+
+                if (filterValue === 'all') {
+                    tasks.show();
+                } else {
+                    tasks.filter(`[data-status="${filterValue}"]`).show();
+                }
+            });
+        };
+
+        $('#container').taskFilter();
+    </script>
+</body>
+
+</html>
