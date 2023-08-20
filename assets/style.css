@@ -31,3 +31,16 @@ body {
     flex-shrink: 0;
     margin-right: 10px;
 }
+
+.drag-handle {
+    display: inline-block;
+    cursor: move;
+    padding: 5px;
+    margin-right: 10px;
+    user-select: none;
+    opacity: 0.5;
+}
+
+.drag-handle:hover{
+    opacity: 1;
+}

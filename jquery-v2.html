@@ -15,6 +15,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script>
         $(document).ready(function () {
             function addTask(taskText) {
@@ -22,11 +23,12 @@
                     todoItem = $('<div>').addClass('todo-item').attr('data-status', taskStatus),
                     checkbox = $('<input>').attr('type', 'checkbox').addClass('todo-checkbox form-check-input me-2'),
                     span = $('<span>').text(taskText),
-                    deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete');
+                    deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete'),
+                    dragHandle = $("<div>").addClass("drag-handle").text("☰");
 
-                todoItem.append(checkbox, span, deleteBtn);
+                todoItem.append(dragHandle, checkbox, span, deleteBtn);
 
-                $('#todo-list').prepend(todoItem);
+                $("#todo-list").prepend(todoItem);
 
                 $(document).trigger('todo:updated');
             }
@@ -40,6 +42,21 @@
                 </div>
                 <div id="todo-list"></div>
             `);
+
+            $("#todo-list").sortable({
+                axis: "y",
+                containment: "#todo-list",
+                handle: ".drag-handle",
+                stop: function () {
+                    const tasks = $(".todo-item");
+                    const newOrder = [];
+                    tasks.each(function () {
+                        const taskId = $(this).data("task-id");
+                        newOrder.push(taskId);
+                    });
+                    console.log("New task order:", newOrder);
+                },
+            });
 
             $(document).trigger('todo:container-added');
 
