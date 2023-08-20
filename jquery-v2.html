@@ -192,6 +192,13 @@
                     }
                 });
             });
+
+            $(document).on('keydown', function (event) {
+                if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+                    searchInput.focus();
+                    event.preventDefault();
+                }
+            });
         };
 
         function fuzzyMatch(text, pattern) {
