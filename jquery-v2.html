@@ -20,7 +20,7 @@
             function addTask(taskText) {
                 const taskStatus = 'active',
                     todoItem = $('<div>').addClass('todo-item').attr('data-status', taskStatus),
-                    checkbox = $('<input>').attr('type', 'checkbox').addClass('form-check-input me-2'),
+                    checkbox = $('<input>').attr('type', 'checkbox').addClass('todo-checkbox form-check-input me-2'),
                     span = $('<span>').text(taskText),
                     deleteBtn = $('<button>').addClass('btn btn-danger btn-sm ms-2').text('Delete');
 
@@ -28,12 +28,7 @@
 
                 $('#todo-list').prepend(todoItem);
 
-                checkbox.on('change', function () {
-                    const isChecked = $(this).prop('checked');
-
-                    todoItem.attr('data-status', isChecked ? 'completed' : 'active');
-                    span.toggleClass('text-decoration-line-through text-dark text-opacity-25', isChecked);
-                });
+                $(document).trigger('todo:updated');
             }
 
             $('#container').append(`
@@ -46,6 +41,8 @@
                 <div id="todo-list"></div>
             `);
 
+            $(document).trigger('todo:container-added');
+
             $('#add-btn').on('click', function () {
                 const taskText = $('#task-input').val().trim();
 
@@ -57,6 +54,18 @@
 
             $(document).on('click', '.btn-danger', function () {
                 $(this).closest('.todo-item').remove();
+                $(document).trigger('todo:updated');
+            });
+
+            $(document).on('change', '.todo-checkbox', function () {
+                const _t = $(this),
+                    isChecked = _t.prop('checked'),
+                    todoItem = _t.closest('.todo-item');
+
+                todoItem.attr('data-status', isChecked ? 'completed' : 'active');
+                todoItem.find('span').toggleClass('text-decoration-line-through text-dark text-opacity-25', isChecked);
+
+                $(document).trigger('todo:updated');
             });
 
             $('#task-input').on('keyup', function (event) {
@@ -70,6 +79,60 @@
                 }
             });
         });
+
+        $.fn.editTask = function () {
+            const _t = this;
+
+            _t.on('dblclick', '.todo-item span', function () {
+                const taskItem = $(this).closest('.todo-item'),
+                    taskText = taskItem.find('span').text(),
+                    isCompleted = taskItem.data('status') === 'completed',
+                    editTextbox = $('<input type="text" class="form-control edit-input">').val(taskText);
+
+                taskItem.html('').append(editTextbox);
+
+                editTextbox.on('blur keyup', function (event) {
+                    if (event.type === 'blur' || event.key === 'Enter') {
+                        const editedText = $(this).val().trim();
+
+                        if (editedText !== '') {
+                            taskItem.html(`<input type="checkbox" class="todo-checkbox form-check-input me-2" ${isCompleted ? 'checked' : ''}>
+                                    <span>${editedText}</span>
+                                    <button class="btn btn-danger btn-sm ms-2">Delete</button>`);
+
+                            if (isCompleted) {
+                                taskItem.find('span').addClass('text-decoration-line-through text-dark text-opacity-25');
+                            }
+                        }
+                    }
+                });
+
+                editTextbox.focus();
+            });
+        };
+
+        $.fn.taskCountSummary = function (appendTo = '#todo-init') {
+            const _t = this,
+                summaryContainer = $('<div class="task-summary blockquote-footer text-end"></div>');
+
+            $(document).on('todo:container-added', function () {
+                _t.find(appendTo).append(summaryContainer);
+            });
+
+            function updateSummary() {
+                const tasks = _t.find('.todo-item'),
+                    totalTasks = tasks.length,
+                    completedTasks = tasks.filter('[data-status="completed"]').length,
+                    remainingTasks = totalTasks - completedTasks,
+                    summaryText = `${remainingTasks} tasks remaining out of ${totalTasks} (${completedTasks} completed)`;
+
+                summaryContainer.text(summaryText);
+            }
+
+            updateSummary();
+
+            $(document).on('todo:updated', updateSummary);
+        };
 
         $.fn.taskFilter = function () {
             const _t = this,
@@ -111,7 +174,7 @@
         $.fn.fuzzySearch = function (useFuzzyMatch = false) {
             const _t = this;
 
-            searchInput = $('<input type="text" class="form-control my-4" placeholder="Search tasks...">');
+            searchInput = $('<input type="text" class="form-control mb-4" placeholder="Search tasks...">');
 
             _t.append(searchInput);
 
@@ -144,8 +207,10 @@
             return patternIndex === patternLength;
         }
 
+        $('#container').editTask();
         $('#container').taskFilter();
         $('#container').fuzzySearch(true);
+        $('#container').taskCountSummary();
     </script>
 </body>
 
